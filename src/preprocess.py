@@ -106,12 +106,42 @@ def event_generate(start_year=2017, stop_year=2022, symptom_list=symptom_list, t
 
         for symptom in data_dict[region].keys():
             if symptom not in event_mark[region].keys():
-                event_mark[region][symptom] = []
+                event_mark[region][symptom] = {}
             symptom_data = data_dict[region][symptom]
 
             for i,s in enumerate(symptom_data[:-1]):
                 if thres * symptom_data[i] <= symptom_data[i+1]:
-                    event_mark[region][symptom].append(i+1)
+                    try:
+                        event_mark[region][symptom]['all'].append(i+1)
+                    except:
+                        event_mark[region][symptom]['all'] = [i+1]
+
+                    if int(i/50) == 0:
+                        try:
+                            event_mark[region][symptom]['2017'].append(i+1)
+                        except:
+                            event_mark[region][symptom]['2017'] = [i+1]
+
+                    if int(i/50) == 1:
+                        try:
+                            event_mark[region][symptom]['2018'].append(i+1)
+                        except:
+                            event_mark[region][symptom]['2018'] = [i+1]
+                    if int(i/50) == 2:
+                        try:
+                            event_mark[region][symptom]['2019'].append(i+1)
+                        except:
+                            event_mark[region][symptom]['2019'] = [i+1]
+                    if int(i/50) == 3:
+                        try:
+                            event_mark[region][symptom]['2020'].append(i+1)
+                        except:
+                            event_mark[region][symptom]['2020'] = [i+1]
+                    if int(i/50) == 4:
+                        try:
+                            event_mark[region][symptom]['2021'].append(i+1)
+                        except:
+                            event_mark[region][symptom]['2021'] = [i+1]
 
     for region in event_mark.keys():
         temp_l = []
