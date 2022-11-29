@@ -1,7 +1,7 @@
 class Client(object):
-    def __init__(self, client_id, dataloader, device='cpu'):
+    def __init__(self, client_id, train_data, device='cpu'):
         self.client_id = client_id
-        self.dataloader = dataloader
+        self.train_data = train_data
         self.device = device
         self._model = None
 
@@ -17,7 +17,10 @@ class Client(object):
         raise NotImplementedError
 
     def __len__(self):
-        return len(self.dataloader.dataset)
+        return len(self.train_data)
 
     def loss_estimator(self):
+        raise NotImplementedError
+
+    def train(self):
         raise NotImplementedError
