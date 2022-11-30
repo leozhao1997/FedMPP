@@ -48,6 +48,15 @@ class FedAvg(FedBase):
         self.client = [FedAvgClient(i, train_dataloader[i], self.device) for i in range(self.num_client)]
         self.datasize = sum([len(i) for i in self.client])
         self.weight = [len(i)/self.datasize for i in self.client]
+
+        # for c in self.client:
+        #     print(c.train_data.shape)
+        #     print(torch.max(c.train_data))
+        #     print(torch.min(c.train_data))
+
+        # print(c.train_data)
+
+        # raise Exception('stop')
         
         self.server = FedAvgServer(self.model, test_dataloader, device=self.device)
 

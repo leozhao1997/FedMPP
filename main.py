@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 
-from config import get_config
 from fedzoo.fedavg import FedAvg
 from model.markedpp import MultivariateExponentialHawkes
 import torch.optim as optim
@@ -23,7 +22,7 @@ def main():
 
     T          = np.array([0., 50.])
     data_dim   = 2
-    n_class = 12
+    n_class = 11
 
     alphas = np.random.uniform(low=0.0, high=1.0, size=(n_class, n_class))
     beta   = np.random.uniform(low=0.0, high=1.0, size=(n_class))
@@ -31,7 +30,7 @@ def main():
     model = MultivariateExponentialHawkes(T=T, mu=0.01*np.ones(n_class), alphas=alphas, beta=beta,
                                            data_dim=data_dim, device=device)
     optimizer = optim.Adadelta
-    optimizer_args = {'lr':1e-2}
+    optimizer_args = {'lr':1e0}
 
 
     fed = FedAvg(

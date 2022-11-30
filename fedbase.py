@@ -15,7 +15,9 @@ client_list = [
 
 
 symptom_list = [
-    'symptom:Anxiety', 'symptom:Asthma', 'symptom:Anosmia', 'symptom:Alcoholism',
+    'symptom:Anxiety', 'symptom:Asthma', 
+    # 'symptom:Anosmia', 
+    'symptom:Alcoholism',
     'symptom:Common cold', 'symptom:Cough', 'symptom:Depression', 'symptom:Fatigue',
     'symptom:Fever', 'symptom:Headache', 'symptom:Nausea', 'symptom:Shortness of breath'
 ]
@@ -39,14 +41,15 @@ class FedBase(object):
             test_year = '2021'
 
             client_train_data = []
+            max_len = 0
             for client in client_list:
                 train_data = []
-                max_len = 0
+            
                 for year in train_year:
                     year_data = None
                     for i,symptom in enumerate(symptom_list):
-                        try:
                             temp_sym_data = np.array(all_data[client][symptom][year]).reshape(-1,1)
+                            temp_sym_data = temp_sym_data % 50 + 1
                             symptom_code = np.ones_like(temp_sym_data) * i
 
                             temp_sym_data = np.concatenate((temp_sym_data, symptom_code), axis=-1)
@@ -55,21 +58,27 @@ class FedBase(object):
                                 year_data = np.concatenate((year_data, temp_sym_data), axis=0)
                             except:
                                 year_data = temp_sym_data
-                        except:
-                            continue
 
                     year_data = year_data[np.argsort(year_data[:,0])]
                     max_len = max([max_len, len(year_data)])
 
                     train_data.append(year_data)
 
+                # for i in range(len(train_data)):
+                #     try:
+                #         train_data[i] = np.concatenate((train_data[i], np.zeros([max_len-len(train_data[i]), 2])), axis=0)
+                #     except:
+                #         continue
+
+                client_train_data.append(train_data)
+
+            for train_data in client_train_data:
                 for i in range(len(train_data)):
                     try:
                         train_data[i] = np.concatenate((train_data[i], np.zeros([max_len-len(train_data[i]), 2])), axis=0)
                     except:
                         continue
 
-                client_train_data.append(train_data)
 
 
             client_test_data = []
