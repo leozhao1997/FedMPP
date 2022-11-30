@@ -10,7 +10,7 @@ from client import Client
 from util import NonNegativeClipper
 
 class FedAvg(FedBase):
-    def __init__(self, dataset, model, optimizer, optimizer_args, num_client=48, batchsize=4, round = 100
+    def __init__(self, dataset, model, optimizer, optimizer_args, num_client=52, batchsize=4, round = 1000
         ):
         super().__init__(dataset=dataset)
         # model 
@@ -44,21 +44,25 @@ class FedAvg(FedBase):
         train_dataloader = [torch.FloatTensor(train_data[i]) for i in range(len(train_data))]
         test_dataloader =  [torch.FloatTensor(test_data[i]) for i in range(len(test_data))]
 
+        # print(len(test_dataloader))
+        # for i in range(len(test_dataloader)):
+        #     print(test_dataloader[i].size())
+        # print(test_dataloader[i])
+
+        # raise Exception('stop')
+
         # allocate to local client 
         self.client = [FedAvgClient(i, train_dataloader[i], self.device) for i in range(self.num_client)]
         self.datasize = sum([len(i) for i in self.client])
         self.weight = [len(i)/self.datasize for i in self.client]
-
-        # for c in self.client:
-        #     print(c.train_data.shape)
-        #     print(torch.max(c.train_data))
-        #     print(torch.min(c.train_data))
-
-        # print(c.train_data)
-
-        # raise Exception('stop')
         
         self.server = FedAvgServer(self.model, test_dataloader, device=self.device)
+
+        # for i in self.client:
+        #     print(i.train_data.size())
+
+        # raise Exception('stop')
+
 
     def epoch(self):
         print('Training Begin')
@@ -68,6 +72,10 @@ class FedAvg(FedBase):
             self.train()
             # val_loss, val_acc = self.val()
             # print('Validation Loss: {:4f}, Validation Accuracy: {:4f}'.format(val_loss, val_acc))
+            if i%10 == 0:
+                print('Val Mode')
+                llk = self.val()
+                print('The validation log-likelihood is: {:4f}'.format(np.mean(llk)))
         print('Training End')
 
         
@@ -88,8 +96,8 @@ class FedAvg(FedBase):
 
 
     def val(self):
-        val_loss, val_acc = self.server.validation(self.loss_fn)
-        return val_loss, val_acc
+        llk = self.server.validation()
+        return llk
 
 
 class FedAvgServer(CenterServer):
@@ -110,10 +118,27 @@ class FedAvgServer(CenterServer):
 
         self.model.load_state_dict(update_state)
 
-    def validation(self, loss_fn, isRecord = False):
+    def validation(self):
         """
         TODO
         """
+        ##clipper2  = ProximityClipper(coords, k=k)
+        # NOTE: gradient for loss is expected to be None, 
+        #       since it is not leaf node. (it's root node)
+
+        self.model.to(self.device)
+        test_llk = []
+
+
+        for test_data in self.dataloader:
+            with torch.no_grad():
+                test_loglik = self.model(test_data.to(self.device))
+                test_event_num = (test_data[..., 0] > 0).sum()
+                test_event_llk = test_loglik / test_event_num
+
+            test_llk.append(test_event_llk)
+            
+        return test_llk
         # lossmeter = RecordingMeter()
         # accmeter = RecordingMeter()
 
@@ -135,7 +160,7 @@ class FedAvgServer(CenterServer):
 
 
 class FedAvgClient(Client):
-    def client_update(self, local_step, optimizer, optimizer_args, batch_size, print_iter=1, tol=1e-4):
+    def client_update(self, local_step, optimizer, optimizer_args, batch_size, print_iter=2, tol=1e-4):
         seed = 500
         torch.random.manual_seed(seed)
         np.random.seed(seed)
@@ -145,6 +170,7 @@ class FedAvgClient(Client):
         train_llk = self.train(self.model, self.train_data, device=self.device,
                     num_epochs=local_step, optim=optimizer, lr=optimizer_args['lr'], batch_size=batch_size,
                     print_iter=print_iter, tol=tol)
+
 
 
     def train(self, model, train_data, device, num_epochs, optim, lr=1e-4, batch_size=5, print_iter=2, tol=1e-2):

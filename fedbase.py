@@ -82,12 +82,14 @@ class FedBase(object):
 
 
             client_test_data = []
+            max_len = 0
 
             for client in client_list:
                 test_data = []
-                max_len = 0
+                year_data = None
                 for i,symptom in enumerate(symptom_list):
                     temp_sym_data = np.array(all_data[client][symptom][test_year]).reshape(-1,1)
+                    temp_sym_data = temp_sym_data % 50 + 1
                     symptom_code = np.ones_like(temp_sym_data) * i
 
                     temp_sym_data = np.concatenate((temp_sym_data, symptom_code), axis=-1)
@@ -102,13 +104,14 @@ class FedBase(object):
 
                 test_data.append(year_data)
 
+                client_test_data.append(test_data)
+
+            for test_data in client_test_data:
                 for i in range(len(test_data)):
                     try:
                         test_data[i] = np.concatenate((test_data[i], np.zeros([max_len-len(test_data[i]), 2])), axis=0)
                     except:
                         continue
-
-                client_test_data.append(test_data)
 
         return client_train_data, client_test_data
 
