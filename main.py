@@ -2,6 +2,7 @@ import torch
 import numpy as np
 
 from fedzoo.fedavg import FedAvg
+from fedzoo.fedprox import FedProx
 from model.markedpp import MultivariateExponentialHawkes
 import torch.optim as optim
 
@@ -38,6 +39,12 @@ def main():
     )
 
     fed.epoch()
+
+    # fed = FedProx(
+    #     dataset='Outbreak', model=model, optimizer=optimizer, optimizer_args=optimizer_args,
+    # )
+
+    # fed.epoch()
 
 
 

@@ -54,7 +54,8 @@ class FedAvg(FedBase):
         # allocate to local client 
         self.client = [FedAvgClient(i, train_dataloader[i], self.device) for i in range(self.num_client)]
         self.datasize = sum([len(i) for i in self.client])
-        self.weight = [len(i)/self.datasize for i in self.client]
+        # self.weight = [len(i)/self.datasize for i in self.client]
+        self.weight = np.ones(len(self.client))
         
         self.server = FedAvgServer(self.model, test_dataloader, device=self.device)
 
@@ -87,12 +88,13 @@ class FedAvg(FedBase):
             i.model = self.server.send_model()
 
         # train all clients
-        selected_client = np.arange(self.num_client)
+        # selected_client = np.arange(self.num_client)
+        selected_client = np.array([self.num_client-1])
         
         for i in iter(selected_client):
             self.client[i].client_update(self.local_epoch[i], self.optimizer, self.optimizer_args, self.batchsize)
 
-        self.server.aggregation(self.client, self.weight)
+        self.server.aggregation(self.client, self.weight, selected_client)
 
 
     def val(self):
@@ -104,17 +106,22 @@ class FedAvgServer(CenterServer):
     def __init__(self, model, dataloader, device='cpu', minorityloader = None):
         super().__init__(model, dataloader, device='cpu', minorityloader=minorityloader)
 
-    def aggregation(self, client, weight):
+    def aggregation(self, client, weight, selected_client):
         update_state = OrderedDict()
 
         for i, client_i in enumerate(client):
             local_state = client_i.model.state_dict()
 
-            for key in self.model.state_dict().keys():
-                try:
-                    update_state[key] += local_state[key] * weight[i] 
-                except:
-                    update_state[key] = local_state[key] * weight[i]
+            if i not in selected_client:
+                continue
+
+            else:
+
+                for key in self.model.state_dict().keys():
+                    try:
+                        update_state[key] += local_state[key] * weight[i] 
+                    except:
+                        update_state[key] = local_state[key] * weight[i]
 
         self.model.load_state_dict(update_state)
 
