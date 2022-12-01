@@ -54,8 +54,8 @@ class FedAvg(FedBase):
         # allocate to local client 
         self.client = [FedAvgClient(i, train_dataloader[i], self.device) for i in range(self.num_client)]
         self.datasize = sum([len(i) for i in self.client])
-        # self.weight = [len(i)/self.datasize for i in self.client]
-        self.weight = np.ones(len(self.client))
+        self.weight = [len(i)/self.datasize for i in self.client]
+        # self.weight = np.ones(len(self.client))
         
         self.server = FedAvgServer(self.model, test_dataloader, device=self.device)
 
@@ -79,6 +79,8 @@ class FedAvg(FedBase):
                 print('The validation log-likelihood is: {:4f}'.format(np.mean(llk)))
         print('Training End')
 
+        return llk
+
         
 
     def train(self):
@@ -88,8 +90,8 @@ class FedAvg(FedBase):
             i.model = self.server.send_model()
 
         # train all clients
-        # selected_client = np.arange(self.num_client)
-        selected_client = np.array([self.num_client-1])
+        selected_client = np.arange(self.num_client)
+        # selected_client = np.array([self.num_client-1])
         
         for i in iter(selected_client):
             self.client[i].client_update(self.local_epoch[i], self.optimizer, self.optimizer_args, self.batchsize)

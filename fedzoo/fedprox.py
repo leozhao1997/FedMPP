@@ -80,6 +80,8 @@ class FedProx(FedBase):
                 print('The validation log-likelihood is: {:4f}'.format(np.mean(llk)))
         print('Training End')
 
+        return llk
+
         
 
     def train(self):
